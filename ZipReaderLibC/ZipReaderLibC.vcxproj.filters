@@ -26,5 +26,8 @@
     <ClInclude Include="Zip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ZipHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
