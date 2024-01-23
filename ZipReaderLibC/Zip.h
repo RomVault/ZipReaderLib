@@ -23,20 +23,36 @@ enum ZipReturn
 
 class Zip
 {
-
+	const unsigned int EndOfCentralDirSignature = 0x06054b50;
+	const unsigned int Zip64EndOfCentralDirSignature = 0x06064b50;
+	const unsigned int Zip64EndOfCentralDirectoryLocator = 0x07064b50;
+	
+	fstream _zipFs;
 	unsigned int _localFilesCount;
+
 	unsigned int _centralDirSize;
 	unsigned int _centralDirStart;
+	unsigned long _endOfCentralDir64;
+
 	unsigned char* _fileComment;
 
+	long fileSize;
+	bool ExtraDataFoundOnEndOfFile = false;
+
+	bool _zip64;
+
+	unsigned long offset = 0;
 
 public:
 	ZipReturn ZipFileOpen(const char* zipFilePath);
 
 private:
-	ZipReturn ZipFileReadHeaders(fstream& zipFs);
-	ZipReturn FindEndOfCentralDirSignature(fstream& zipFs);
-	ZipReturn EndOfCentralDirRead(fstream& zipFs);
+	ZipReturn ZipFileReadHeaders();
+	ZipReturn FindEndOfCentralDirSignature();
+	ZipReturn EndOfCentralDirRead(); 
+	ZipReturn Zip64EndOfCentralDirRead();
+	ZipReturn Zip64EndOfCentralDirectoryLocatorRead();
+
 
 };
 
