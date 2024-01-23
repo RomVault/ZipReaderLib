@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ZipReaderLib": {
+      "commandName": "Project",
+      "commandLineArgs": "\"T:\\TotalDosCollection\\TDC Daily\\Games\\Files\\1993\\Indianapolis 500- The Simulation (1993)(Electronic Arts, Inc.) [Racing - Driving, Simulation, Sports][!].zip\""
+    }
+  }
+}
