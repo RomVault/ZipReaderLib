@@ -4,23 +4,37 @@
 using namespace std;
 
 
-int Zip::openZipFile(const char* zipFilePath)
+
+ZipReturn Zip::ZipFileOpen(const char* zipFilePath)
 {
 	fstream zipFs;
 	zipFs.open(zipFilePath, ios::binary | ios::in);
-	FindEndOfCentralDirSignature(zipFs);
-
-
-	unsigned long endOfCentralDir = zipFs.tellg();
-	EndOfCentralDirRead(zipFs);
-
-	zipFs.close();
-	return 0;
+	return ZipFileReadHeaders(zipFs);
 }
 
+ZipReturn Zip::ZipFileReadHeaders(fstream& zipFs)
+{
+	ZipReturn zRet;
+	zRet = FindEndOfCentralDirSignature(zipFs);
+	if (zRet != ZipGood)
+	{
+		zipFs.close();
+		return zRet;
+	}
 
+	unsigned long endOfCentralDir = zipFs.tellg();
+	zRet = EndOfCentralDirRead(zipFs);
+	if (zRet != ZipGood)
+	{
+		zipFs.close();
+		return zRet;
+	}
 
-int Zip::FindEndOfCentralDirSignature(fstream& zipFs)
+	zipFs.close();
+	return zRet;
+}
+
+ZipReturn Zip::FindEndOfCentralDirSignature(fstream& zipFs)
 {
 	zipFs.seekg(0, ios::end);
 	long fileSize = zipFs.tellg();
@@ -59,41 +73,36 @@ int Zip::FindEndOfCentralDirSignature(fstream& zipFs)
 
 			zipFs.seekg(fileSize - backPosition + i, ios::beg);
 
-			return 0;
+			return ZipGood;
 		}
 	}
-	return 1;
+	return ZipCentralDirError;
 }
 
 const unsigned int EndOfCentralDirSignature = 0x06054b50;
 const unsigned int Zip64EndOfCentralDirSignature = 0x06064b50;
 const unsigned int Zip64EndOfCentralDirectoryLocator = 0x07064b50;
 
-unsigned int _localFilesCount;
-unsigned int _centralDirSize;
-unsigned int _centralDirStart;
-unsigned char* _fileComment;
-
-int Zip::EndOfCentralDirRead(fstream& zipFs)
+ZipReturn Zip::EndOfCentralDirRead(fstream& zipFs)
 {
 	unsigned int thisSignature;
 	zipFs.read((char*)&thisSignature, 4);
 	if (thisSignature != EndOfCentralDirSignature)
 	{
-		return 1;
+		return ZipEndOfCentralDirectoryError;
 	}
 
 	unsigned short tUShort;
 	zipFs.read((char*)&tUShort, 2); // NumberOfThisDisk
 	if (tUShort != 0)
 	{
-		return 1;
+		return ZipEndOfCentralDirectoryError;
 	}
 
 	zipFs.read((char*)&tUShort, 2); // NumberOfThisDiskCenterDir
 	if (tUShort != 0)
 	{
-		return 1;
+		return ZipEndOfCentralDirectoryError;
 	}
 
 	zipFs.read((char*)&_localFilesCount, 2); // TotalNumberOfEntriesDisk
@@ -101,7 +110,7 @@ int Zip::EndOfCentralDirRead(fstream& zipFs)
 	zipFs.read((char*)&tUShort, 2); // TotalNumber of entries in the central directory 
 	if (tUShort != _localFilesCount)
 	{
-		return 1;
+		return ZipEndOfCentralDirectoryError;
 	}
 
 	zipFs.read((char*)&_centralDirSize, 4); // SizeOfCentralDir
@@ -113,9 +122,9 @@ int Zip::EndOfCentralDirRead(fstream& zipFs)
 	_fileComment = new unsigned char[zipFileCommentLength];
 	zipFs.read((char*)_fileComment, zipFileCommentLength); // ZipFileComment
 
-//	ExtraDataFoundOnEndOfFile = _zipFs.Position != _zipFs.Length;
+	//	ExtraDataFoundOnEndOfFile = _zipFs.Position != _zipFs.Length;
 
-	return 0;
+	return ZipGood;
 }
 
 
