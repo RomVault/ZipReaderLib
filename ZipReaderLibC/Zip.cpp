@@ -13,6 +13,9 @@ ZipReturn Zip::ZipFileOpen(const char* zipFilePath)
 	return ret;
 }
 
+
+
+
 ZipReturn Zip::ZipFileReadHeaders()
 {
 	ZipReturn zRet;
@@ -80,6 +83,9 @@ ZipReturn Zip::ZipFileReadHeaders()
 
 	return ZipGood;
 }
+
+
+
 
 
 ZipReturn Zip::FindEndOfCentralDirSignature()
@@ -257,3 +263,170 @@ ZipReturn Zip::Zip64EndOfCentralDirectoryLocatorRead()
 
 
 
+/*
+
+
+		internal ZipReturn CentralDirectoryHeaderRead(ulong offset, out ZipHeader centralFile)
+		{
+			try
+			{
+				centralFile = new ZipHeader();
+				using BinaryReader br = new(_zipFs, Encoding.UTF8, true);
+				uint thisSignature = br.ReadUInt32();
+				if (thisSignature != CentralDirectoryHeaderSignature)
+					return ZipReturn.ZipCentralDirError;
+
+				centralFile.VersionMadeBy = br.ReadUInt16(); // Version Made By
+				centralFile.VersionNeededToExtract = br.ReadUInt16(); // Version Needed To Extract
+
+				centralFile.GeneralPurposeBitFlag = br.ReadUInt16();
+				centralFile.CompressionMethod = br.ReadUInt16();
+
+				ushort lastModFileTime = br.ReadUInt16();
+				ushort lastModFileDate = br.ReadUInt16();
+
+				centralFile.HeaderLastModified = CompressUtils.CombineDosDateTime(lastModFileDate, lastModFileTime);
+
+				centralFile.CRC = ReadCRC(br);
+
+				centralFile.CompressedSize = br.ReadUInt32();
+				centralFile.UncompressedSize = br.ReadUInt32();
+
+				ushort fileNameLength = br.ReadUInt16();
+				ushort extraFieldLength = br.ReadUInt16();
+				ushort fileCommentLength = br.ReadUInt16();
+
+				br.ReadUInt16(); // diskNumberStart
+				br.ReadUInt16(); // internalFileAttributes
+				br.ReadUInt32(); // externalFileAttributes
+
+				centralFile.RelativeOffsetOfLocalHeader = br.ReadUInt32();
+
+
+				centralFile.bFileName = br.ReadBytes(fileNameLength);
+				centralFile.Filename = (centralFile.GeneralPurposeBitFlag & (1 << 11)) == 0
+					? CompressUtils.GetString(centralFile.bFileName)
+					: Encoding.UTF8.GetString(centralFile.bFileName, 0, fileNameLength);
+
+				centralFile.IsZip64 = false;
+				centralFile.ExtraDataFound = false;
+				if (extraFieldLength > 0)
+				{
+					centralFile.bExtraField = br.ReadBytes(extraFieldLength);
+					ZipReturn zr = ZipExtraFieldRead.ExtraFieldRead(centralFile, true);
+					if (zr != ZipReturn.ZipGood)
+						return zr;
+				}
+
+				centralFile.RelativeOffsetOfLocalHeader += offset;
+
+				if (fileCommentLength > 0)
+				{
+					centralFile.bFileComment = br.ReadBytes(fileCommentLength);
+				}
+
+				return ZipReturn.ZipGood;
+			}
+			catch
+			{
+				centralFile = null;
+				return ZipReturn.ZipCentralDirError;
+			}
+		}
+
+		internal ZipReturn LocalFileHeaderRead(ulong RelativeOffsetOfLocalHeader, ulong CompressedSize, out ZipHeader localFile)
+		{
+			try
+			{
+				localFile = new ZipHeader();
+				using (BinaryReader br = new(_zipFs, Encoding.UTF8, true))
+				{
+					localFile.RelativeOffsetOfLocalHeader = RelativeOffsetOfLocalHeader;
+					zipFs.Position = (long)RelativeOffsetOfLocalHeader;
+					uint thisSignature = br.ReadUInt32();
+					if (thisSignature != LocalFileHeaderSignature)
+						return ZipReturn.ZipLocalFileHeaderError;
+
+					localFile.VersionNeededToExtract = br.ReadUInt16(); // version needed to extract
+					localFile.GeneralPurposeBitFlag = br.ReadUInt16();
+
+					localFile.CompressionMethod = br.ReadUInt16();
+
+					ushort lastModFileTime = br.ReadUInt16();
+					ushort lastModFileDate = br.ReadUInt16();
+
+					localFile.HeaderLastModified = CompressUtils.CombineDosDateTime(lastModFileDate, lastModFileTime);
+
+					localFile.CRC = ReadCRC(br);
+					localFile.CompressedSize = br.ReadUInt32();
+					localFile.UncompressedSize = br.ReadUInt32();
+					ulong localRelativeOffset = 0;
+
+					ushort fileNameLength = br.ReadUInt16();
+					ushort extraFieldLength = br.ReadUInt16();
+
+
+					localFile.bFileName = br.ReadBytes(fileNameLength);
+					localFile.Filename = (localFile.GeneralPurposeBitFlag & (1 << 11)) == 0
+						? CompressUtils.GetString(localFile.bFileName)
+						: Encoding.UTF8.GetString(localFile.bFileName, 0, fileNameLength);
+
+					localFile.IsZip64 = false;
+					localFile.ExtraDataFound = false;
+					if (extraFieldLength > 0)
+					{
+						localFile.bExtraField = br.ReadBytes(extraFieldLength);
+
+						ZipReturn zr = ZipExtraFieldRead.ExtraFieldRead(localFile, false);
+						if (zr != ZipReturn.ZipGood)
+							return zr;
+					}
+
+
+					localFile.DataLocation = (ulong)zipFs.Position;
+
+					if ((localFile.GeneralPurposeBitFlag & 8) == 8)
+					{
+						zipFs.Position += (long)CompressedSize;
+
+						localFile.CRC = ReadCRC(br);
+						if (CompressUtils.ByteArrCompare(localFile.CRC, new byte[] { 0x08, 0x07, 0x4b, 0x50 }))
+						{
+							localFile.CRC = ReadCRC(br);
+						}
+
+						if (localFile.IsZip64)
+						{
+							localFile.CompressedSize = br.ReadUInt64();
+							localFile.UncompressedSize = br.ReadUInt64();
+						}
+						else
+						{
+							localFile.CompressedSize = br.ReadUInt32();
+							localFile.UncompressedSize = br.ReadUInt32();
+						}
+					}
+					return ZipReturn.ZipGood;
+				}
+			}
+			catch
+			{
+				localFile = null;
+				return ZipReturn.ZipLocalFileHeaderError;
+			}
+		}
+
+		private static byte[] ReadCRC(BinaryReader br)
+		{
+			byte[] tCRC = new byte[4];
+			tCRC[3] = br.ReadByte();
+			tCRC[2] = br.ReadByte();
+			tCRC[1] = br.ReadByte();
+			tCRC[0] = br.ReadByte();
+			return tCRC;
+		}
+
+
+
+
+*/

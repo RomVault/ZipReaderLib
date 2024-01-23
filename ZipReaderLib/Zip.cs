@@ -146,7 +146,7 @@ namespace ZipReaderLib
                 _centralDirectoryHeaders = new ZipHeader[_localFilesCount];
                 for (int i = 0; i < _localFilesCount; i++)
                 {
-                    zRet = CentralDirectoryHeaderRead(_zipFs, offset, out ZipHeader CentralFile);
+                    zRet = CentralDirectoryHeaderRead(offset, out ZipHeader CentralFile);
                     if (zRet != ZipReturn.ZipGood)
                         return zRet;
 
@@ -156,7 +156,7 @@ namespace ZipReaderLib
                 _localFileHeaders = new ZipHeader[_localFilesCount];
                 for (int i = 0; i < _localFilesCount; i++)
                 {
-                    zRet = LocalFileHeaderRead(_zipFs, _centralDirectoryHeaders[i].RelativeOffsetOfLocalHeader, _centralDirectoryHeaders[i].CompressedSize, out ZipHeader LocalFile);
+                    zRet = LocalFileHeaderRead(_centralDirectoryHeaders[i].RelativeOffsetOfLocalHeader, _centralDirectoryHeaders[i].CompressedSize, out ZipHeader LocalFile);
                     if (zRet != ZipReturn.ZipGood)
                         return zRet;
 
@@ -351,12 +351,12 @@ namespace ZipReaderLib
         private const uint LocalFileHeaderSignature = 0x04034b50;
         private const uint CentralDirectoryHeaderSignature = 0x02014b50;
 
-        internal static ZipReturn CentralDirectoryHeaderRead(Stream zipFs, ulong offset, out ZipHeader centralFile)
+        internal ZipReturn CentralDirectoryHeaderRead(ulong offset, out ZipHeader centralFile)
         {
             try
             {
                 centralFile = new ZipHeader();
-                using BinaryReader br = new(zipFs, Encoding.UTF8, true);
+                using BinaryReader br = new(_zipFs, Encoding.UTF8, true);
                 uint thisSignature = br.ReadUInt32();
                 if (thisSignature != CentralDirectoryHeaderSignature)
                     return ZipReturn.ZipCentralDirError;
@@ -419,12 +419,12 @@ namespace ZipReaderLib
             }
         }
 
-        internal static ZipReturn LocalFileHeaderRead(Stream zipFs, ulong RelativeOffsetOfLocalHeader, ulong CompressedSize, out ZipHeader localFile)
+        internal ZipReturn LocalFileHeaderRead(ulong RelativeOffsetOfLocalHeader, ulong CompressedSize, out ZipHeader localFile)
         {
             try
             {
                 localFile = new ZipHeader();
-                using (BinaryReader br = new(zipFs, Encoding.UTF8, true))
+                using (BinaryReader br = new(_zipFs, Encoding.UTF8, true))
                 {
                     localFile.RelativeOffsetOfLocalHeader = RelativeOffsetOfLocalHeader;
                     zipFs.Position = (long)RelativeOffsetOfLocalHeader;

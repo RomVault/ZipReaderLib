@@ -27,6 +27,11 @@ class Zip
 	const unsigned int Zip64EndOfCentralDirSignature = 0x06064b50;
 	const unsigned int Zip64EndOfCentralDirectoryLocator = 0x07064b50;
 	
+
+	const unsigned int LocalFileHeaderSignature = 0x04034b50;
+	const unsigned int CentralDirectoryHeaderSignature = 0x02014b50;
+
+
 	fstream _zipFs;
 	unsigned int _localFilesCount;
 
