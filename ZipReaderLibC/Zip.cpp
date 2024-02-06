@@ -1,4 +1,6 @@
 #include "Zip.h"
+#include "ZipHeader.h"
+#include "ZipExtraFieldRead.h"
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -25,7 +27,7 @@ ZipReturn Zip::ZipFileReadHeaders()
 		return zRet;
 	}
 
-	unsigned long endOfCentralDir = _zipFs.tellg();
+	long endOfCentralDir = (long)_zipFs.tellg();
 	zRet = EndOfCentralDirRead();
 	if (zRet != ZipGood)
 	{
@@ -59,27 +61,21 @@ ZipReturn Zip::ZipFileReadHeaders()
 	// now read the central directory
 	_zipFs.seekg(_centralDirStart, ios::beg);
 
-	/*
 	_centralDirectoryHeaders = new ZipHeader[_localFilesCount];
-	for (int i = 0; i < _localFilesCount; i++)
+	for (unsigned int i = 0; i < _localFilesCount; i++)
 	{
-		zRet = CentralDirectoryHeaderRead(_zipFs, offset, out ZipHeader CentralFile);
+		zRet = CentralDirectoryHeaderReader(offset, &_centralDirectoryHeaders[i]);
 		if (zRet != ZipGood)
 			return zRet;
-
-		_centralDirectoryHeaders[i] = CentralFile;
 	}
 
 	_localFileHeaders = new ZipHeader[_localFilesCount];
-	for (int i = 0; i < _localFilesCount; i++)
+	for (unsigned int i = 0; i < _localFilesCount; i++)
 	{
-		zRet = LocalFileHeaderRead(_zipFs, _centralDirectoryHeaders[i].RelativeOffsetOfLocalHeader, _centralDirectoryHeaders[i].CompressedSize, out ZipHeader LocalFile);
+		zRet = LocalFileHeaderReader(_centralDirectoryHeaders[i].RelativeOffsetOfLocalHeader, _centralDirectoryHeaders[i].CompressedSize, &_localFileHeaders[i]);
 		if (zRet != ZipGood)
 			return zRet;
-
-		_localFileHeaders[i] = LocalFile;
 	}
-	*/
 
 	return ZipGood;
 }
@@ -91,7 +87,7 @@ ZipReturn Zip::ZipFileReadHeaders()
 ZipReturn Zip::FindEndOfCentralDirSignature()
 {
 	_zipFs.seekg(0, ios::end);
-	fileSize = _zipFs.tellg();
+	fileSize = (long)_zipFs.tellg();
 	long maxBackSearch = 0xffff;
 
 	if (fileSize < maxBackSearch)
@@ -261,172 +257,136 @@ ZipReturn Zip::Zip64EndOfCentralDirectoryLocatorRead()
 	return ZipGood;
 }
 
+ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long offset, ZipHeader* centralFile)
+{
+	unsigned int thisSignature;
+	_zipFs.read((char*)&thisSignature, 4);
+	if (thisSignature != CentralDirectoryHeaderSignature)
+		return ZipCentralDirError;
 
+	_zipFs.read((char*)&centralFile->VersionMadeBy, 2); // Version Made By
+	_zipFs.read((char*)&centralFile->VersionNeededToExtract, 2); // Version Needed To Extract
 
-/*
+	_zipFs.read((char*)&centralFile->GeneralPurposeBitFlag, 2); // General Purpose Bit Flag
+	_zipFs.read((char*)&centralFile->CompressionMethod, 2); // Compression Method
 
+	unsigned short lastModFileTime;
+	_zipFs.read((char*)&lastModFileTime, 2); // Last Mod File Time
 
-		internal ZipReturn CentralDirectoryHeaderRead(ulong offset, out ZipHeader centralFile)
+	unsigned short lastModFileDate;
+	_zipFs.read((char*)&lastModFileDate, 2); // Last Mod File Date
+
+	centralFile->HeaderLastModified = (lastModFileDate << 16) | lastModFileTime;
+
+	_zipFs.read((char*)&centralFile->CRC, 4); // CRC
+
+	unsigned int tUInt;
+	_zipFs.read((char*)&tUInt, 4); // Compressed Size
+	centralFile->CompressedSize = tUInt;
+
+	_zipFs.read((char*)&tUInt, 4); // Uncompressed Size
+	centralFile->UncompressedSize = tUInt;
+
+	_zipFs.read((char*)&centralFile->fileNameLength, 2); // File Name Length
+	_zipFs.read((char*)&centralFile->extraFieldLength, 2); // Extra Field Length
+	_zipFs.read((char*)&centralFile->fileCommentLength, 2); // File Comment Length
+
+	unsigned short tUShort;
+	_zipFs.read((char*)&tUShort, 2); // Disk Number Start
+	_zipFs.read((char*)&tUShort, 2); // InternalFileAttributes
+	_zipFs.read((char*)&tUInt, 4); // ExternalFileAttributes
+
+	_zipFs.read((char*)&centralFile->RelativeOffsetOfLocalHeader, 4); // Relative Offset Of Local Header
+
+	centralFile->bFileName = new unsigned char[centralFile->fileNameLength+1];
+	_zipFs.read((char*)centralFile->bFileName, centralFile->fileNameLength); // File Name
+	centralFile->bFileName[centralFile->fileNameLength] = 0;
+
+	centralFile->bExtraField = new unsigned char[centralFile->extraFieldLength];
+	_zipFs.read((char*)centralFile->bExtraField, centralFile->extraFieldLength); // Extra Field
+
+	if (centralFile->extraFieldLength > 0)
+		ZipExtraFieldRead::ReadExtraField(centralFile, true);
+
+	centralFile->RelativeOffsetOfLocalHeader += offset;
+
+	centralFile->bFileComment = new unsigned char[centralFile->fileCommentLength];
+	_zipFs.read((char*)centralFile->bFileComment, centralFile->fileCommentLength); // File Comment
+
+	return ZipGood;
+}
+
+ZipReturn Zip::LocalFileHeaderReader(unsigned long relativeOffsetOfLocalHeader, unsigned long compressedSize, ZipHeader* localFile)
+{
+	localFile->RelativeOffsetOfLocalHeader = relativeOffsetOfLocalHeader;
+	_zipFs.seekg((long)relativeOffsetOfLocalHeader, ios::beg);
+	unsigned int thisSignature;
+	_zipFs.read((char*)&thisSignature, 4);
+	if (thisSignature != LocalFileHeaderSignature)
+		return ZipCentralDirError;
+
+	_zipFs.read((char*)&localFile->VersionNeededToExtract, 2); // Version Needed To Extract
+
+	_zipFs.read((char*)&localFile->GeneralPurposeBitFlag, 2); // General Purpose Bit Flag
+	_zipFs.read((char*)&localFile->CompressionMethod, 2); // Compression Method
+
+	unsigned short lastModFileTime;
+	_zipFs.read((char*)&lastModFileTime, 2); // Last Mod File Time
+
+	unsigned short lastModFileDate;
+	_zipFs.read((char*)&lastModFileDate, 2); // Last Mod File Date
+
+	localFile->HeaderLastModified = (lastModFileDate << 16) | lastModFileTime;
+
+	_zipFs.read((char*)&localFile->CRC, 4); // CRC
+
+	unsigned int tUInt;
+	_zipFs.read((char*)&tUInt, 4); // Compressed Size
+	localFile->CompressedSize = tUInt;
+
+	_zipFs.read((char*)&tUInt, 4); // Uncompressed Size
+	localFile->UncompressedSize = tUInt;
+
+	_zipFs.read((char*)&localFile->fileNameLength, 2); // File Name Length
+	_zipFs.read((char*)&localFile->extraFieldLength, 2); // Extra Field Length
+	localFile->fileCommentLength = 0;
+
+	localFile->bFileName = new unsigned char[localFile->fileNameLength+1];
+	_zipFs.read((char*)localFile->bFileName, localFile->fileNameLength); // File Name
+	localFile->bFileName[localFile->fileNameLength] = 0;
+
+	localFile->bExtraField = new unsigned char[localFile->extraFieldLength];
+	_zipFs.read((char*)localFile->bExtraField, localFile->extraFieldLength); // Extra Field
+
+	if (localFile->extraFieldLength > 0)
+		ZipExtraFieldRead::ReadExtraField(localFile, false);
+
+	localFile->DataLocation = (unsigned long)_zipFs.tellg();
+
+	if (localFile->GeneralPurposeBitFlag & 8)
+	{
+		_zipFs.seekg(compressedSize, ios::cur);
+		_zipFs.read((char*)&localFile->CRC, 4); // CRC
+		if (localFile->CRC == 0x08074b50)
 		{
-			try
-			{
-				centralFile = new ZipHeader();
-				using BinaryReader br = new(_zipFs, Encoding.UTF8, true);
-				uint thisSignature = br.ReadUInt32();
-				if (thisSignature != CentralDirectoryHeaderSignature)
-					return ZipReturn.ZipCentralDirError;
-
-				centralFile.VersionMadeBy = br.ReadUInt16(); // Version Made By
-				centralFile.VersionNeededToExtract = br.ReadUInt16(); // Version Needed To Extract
-
-				centralFile.GeneralPurposeBitFlag = br.ReadUInt16();
-				centralFile.CompressionMethod = br.ReadUInt16();
-
-				ushort lastModFileTime = br.ReadUInt16();
-				ushort lastModFileDate = br.ReadUInt16();
-
-				centralFile.HeaderLastModified = CompressUtils.CombineDosDateTime(lastModFileDate, lastModFileTime);
-
-				centralFile.CRC = ReadCRC(br);
-
-				centralFile.CompressedSize = br.ReadUInt32();
-				centralFile.UncompressedSize = br.ReadUInt32();
-
-				ushort fileNameLength = br.ReadUInt16();
-				ushort extraFieldLength = br.ReadUInt16();
-				ushort fileCommentLength = br.ReadUInt16();
-
-				br.ReadUInt16(); // diskNumberStart
-				br.ReadUInt16(); // internalFileAttributes
-				br.ReadUInt32(); // externalFileAttributes
-
-				centralFile.RelativeOffsetOfLocalHeader = br.ReadUInt32();
-
-
-				centralFile.bFileName = br.ReadBytes(fileNameLength);
-				centralFile.Filename = (centralFile.GeneralPurposeBitFlag & (1 << 11)) == 0
-					? CompressUtils.GetString(centralFile.bFileName)
-					: Encoding.UTF8.GetString(centralFile.bFileName, 0, fileNameLength);
-
-				centralFile.IsZip64 = false;
-				centralFile.ExtraDataFound = false;
-				if (extraFieldLength > 0)
-				{
-					centralFile.bExtraField = br.ReadBytes(extraFieldLength);
-					ZipReturn zr = ZipExtraFieldRead.ExtraFieldRead(centralFile, true);
-					if (zr != ZipReturn.ZipGood)
-						return zr;
-				}
-
-				centralFile.RelativeOffsetOfLocalHeader += offset;
-
-				if (fileCommentLength > 0)
-				{
-					centralFile.bFileComment = br.ReadBytes(fileCommentLength);
-				}
-
-				return ZipReturn.ZipGood;
-			}
-			catch
-			{
-				centralFile = null;
-				return ZipReturn.ZipCentralDirError;
-			}
+			_zipFs.read((char*)&localFile->CRC, 4); // CRC
 		}
 
-		internal ZipReturn LocalFileHeaderRead(ulong RelativeOffsetOfLocalHeader, ulong CompressedSize, out ZipHeader localFile)
+		if (localFile->IsZip64)
 		{
-			try
-			{
-				localFile = new ZipHeader();
-				using (BinaryReader br = new(_zipFs, Encoding.UTF8, true))
-				{
-					localFile.RelativeOffsetOfLocalHeader = RelativeOffsetOfLocalHeader;
-					zipFs.Position = (long)RelativeOffsetOfLocalHeader;
-					uint thisSignature = br.ReadUInt32();
-					if (thisSignature != LocalFileHeaderSignature)
-						return ZipReturn.ZipLocalFileHeaderError;
-
-					localFile.VersionNeededToExtract = br.ReadUInt16(); // version needed to extract
-					localFile.GeneralPurposeBitFlag = br.ReadUInt16();
-
-					localFile.CompressionMethod = br.ReadUInt16();
-
-					ushort lastModFileTime = br.ReadUInt16();
-					ushort lastModFileDate = br.ReadUInt16();
-
-					localFile.HeaderLastModified = CompressUtils.CombineDosDateTime(lastModFileDate, lastModFileTime);
-
-					localFile.CRC = ReadCRC(br);
-					localFile.CompressedSize = br.ReadUInt32();
-					localFile.UncompressedSize = br.ReadUInt32();
-					ulong localRelativeOffset = 0;
-
-					ushort fileNameLength = br.ReadUInt16();
-					ushort extraFieldLength = br.ReadUInt16();
-
-
-					localFile.bFileName = br.ReadBytes(fileNameLength);
-					localFile.Filename = (localFile.GeneralPurposeBitFlag & (1 << 11)) == 0
-						? CompressUtils.GetString(localFile.bFileName)
-						: Encoding.UTF8.GetString(localFile.bFileName, 0, fileNameLength);
-
-					localFile.IsZip64 = false;
-					localFile.ExtraDataFound = false;
-					if (extraFieldLength > 0)
-					{
-						localFile.bExtraField = br.ReadBytes(extraFieldLength);
-
-						ZipReturn zr = ZipExtraFieldRead.ExtraFieldRead(localFile, false);
-						if (zr != ZipReturn.ZipGood)
-							return zr;
-					}
-
-
-					localFile.DataLocation = (ulong)zipFs.Position;
-
-					if ((localFile.GeneralPurposeBitFlag & 8) == 8)
-					{
-						zipFs.Position += (long)CompressedSize;
-
-						localFile.CRC = ReadCRC(br);
-						if (CompressUtils.ByteArrCompare(localFile.CRC, new byte[] { 0x08, 0x07, 0x4b, 0x50 }))
-						{
-							localFile.CRC = ReadCRC(br);
-						}
-
-						if (localFile.IsZip64)
-						{
-							localFile.CompressedSize = br.ReadUInt64();
-							localFile.UncompressedSize = br.ReadUInt64();
-						}
-						else
-						{
-							localFile.CompressedSize = br.ReadUInt32();
-							localFile.UncompressedSize = br.ReadUInt32();
-						}
-					}
-					return ZipReturn.ZipGood;
-				}
-			}
-			catch
-			{
-				localFile = null;
-				return ZipReturn.ZipLocalFileHeaderError;
-			}
+			_zipFs.read((char*)&localFile->CompressedSize, 8); // Compressed Size
+			_zipFs.read((char*)&localFile->UncompressedSize, 8); // Uncompressed Size
 		}
-
-		private static byte[] ReadCRC(BinaryReader br)
+		else
 		{
-			byte[] tCRC = new byte[4];
-			tCRC[3] = br.ReadByte();
-			tCRC[2] = br.ReadByte();
-			tCRC[1] = br.ReadByte();
-			tCRC[0] = br.ReadByte();
-			return tCRC;
+			_zipFs.read((char*)&tUInt, 4); // Compressed Size
+			localFile->CompressedSize = tUInt;
+
+			_zipFs.read((char*)&tUInt, 4); // Uncompressed Size
+			localFile->UncompressedSize = tUInt;
 		}
+	}
+	return ZipGood;
+}
 
 
-
-
-*/

@@ -21,12 +21,24 @@
     <ClCompile Include="Zip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ZipExtraFieldRead.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CRC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Zip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ZipHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ZipExtraFieldRead.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CRC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -427,7 +427,7 @@ namespace ZipReaderLib
                 using (BinaryReader br = new(_zipFs, Encoding.UTF8, true))
                 {
                     localFile.RelativeOffsetOfLocalHeader = RelativeOffsetOfLocalHeader;
-                    zipFs.Position = (long)RelativeOffsetOfLocalHeader;
+                    _zipFs.Position = (long)RelativeOffsetOfLocalHeader;
                     uint thisSignature = br.ReadUInt32();
                     if (thisSignature != LocalFileHeaderSignature)
                         return ZipReturn.ZipLocalFileHeaderError;
@@ -468,11 +468,11 @@ namespace ZipReaderLib
                     }
 
 
-                    localFile.DataLocation = (ulong)zipFs.Position;
+                    localFile.DataLocation = (ulong)_zipFs.Position;
 
                     if ((localFile.GeneralPurposeBitFlag & 8) == 8)
                     {
-                        zipFs.Position += (long)CompressedSize;
+                        _zipFs.Position += (long)CompressedSize;
 
                         localFile.CRC = ReadCRC(br);
                         if (CompressUtils.ByteArrCompare(localFile.CRC, new byte[] { 0x08, 0x07, 0x4b, 0x50 }))

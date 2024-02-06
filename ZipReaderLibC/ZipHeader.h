@@ -4,34 +4,43 @@
 
 class ZipHeader
 {
-    //string Filename;
-    unsigned long UncompressedSize;
-    //unsigned char[] CRC;
-    unsigned long CompressedSize;
-    unsigned short CompressionMethod;
+public:
 
+	ZipHeader() {};
 
+	//string Filename;
+	unsigned long long UncompressedSize;
+	//unsigned char[] CRC;
+	unsigned long long CompressedSize;
+	unsigned short CompressionMethod;
 
-    //DOS Datetime from main ZIP headers.
-    long HeaderLastModified;
+	unsigned int CRC;
 
-    //NTFS Datetime from extended Data.
-    long ModifiedTime = LONG_MIN;
-    long CreatedTime = LONG_MIN;
-    long AccessedTime = LONG_MIN;
+	//DOS Datetime from main ZIP headers.
+	long long HeaderLastModified;
 
-        // only in central directory
-    unsigned long RelativeOffsetOfLocalHeader;
+	//NTFS Datetime from extended Data.
+	long long ModifiedTime = LONG_MIN;
+	long long CreatedTime = LONG_MIN;
+	long long AccessedTime = LONG_MIN;
 
-    //unsigned char[] bFileName;
-    //unsigned char[] bExtraField;
-    unsigned long DataLocation;
-    //unsigned char[] bFileComment;
+	// only in central directory
+	unsigned long RelativeOffsetOfLocalHeader;
 
-    bool IsZip64;
-    bool ExtraDataFound;
+	unsigned short fileNameLength;
+	unsigned short extraFieldLength;
+	unsigned short fileCommentLength;
 
-    unsigned short VersionMadeBy;
-    unsigned short VersionNeededToExtract;
-    unsigned short GeneralPurposeBitFlag;
+	unsigned char* bFileName;
+	unsigned char* bExtraField;
+	unsigned char* bFileComment;
+
+	unsigned long long DataLocation;
+
+	bool IsZip64;
+	bool ExtraDataFound;
+
+	unsigned short VersionMadeBy;
+	unsigned short VersionNeededToExtract;
+	unsigned short GeneralPurposeBitFlag;
 };
