@@ -5,7 +5,7 @@ public:
 	CRC();
 	~CRC();
 	void Reset();
-	void SlurpBlock(unsigned char* block, int offset, int count);
+	void SlurpBlock(char* block, int offset, int count);
 	unsigned int Crc32ResultU();
 };
 

@@ -127,12 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CodePage437.cpp" />
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="Zip.cpp" />
     <ClCompile Include="ZipExtraFieldRead.cpp" />
     <ClCompile Include="ZipReaderLibC.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CodePage437.h" />
     <ClInclude Include="CRC.h" />
     <ClInclude Include="Zip.h" />
     <ClInclude Include="ZipExtraFieldRead.h" />

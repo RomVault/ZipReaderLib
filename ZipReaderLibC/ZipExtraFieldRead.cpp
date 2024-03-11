@@ -2,19 +2,20 @@
 #include "CRC.h"
 
 
-unsigned short ZipExtraFieldRead::ToUInt16(unsigned char* bytes, int offset)
+unsigned short ZipExtraFieldRead::ToUInt16(char* bytes, int offset)
 {
-	return  (bytes[offset] |
-		(bytes[offset + 1] << 8));
+	short res;
+	memcpy(&res, bytes + offset, 2);
+	return res;
 }
 
-unsigned int ZipExtraFieldRead::ToUInt32(unsigned char* bytes, int offset)
+unsigned int ZipExtraFieldRead::ToUInt32(char* bytes, int offset)
 {
 	unsigned int uRes;
 	memcpy(&uRes, bytes + offset, 4);
 	return uRes;
 }
-int ZipExtraFieldRead::ToInt32(unsigned char* bytes, int offset)
+int ZipExtraFieldRead::ToInt32(char* bytes, int offset)
 {
 	int res;
 	memcpy(&res, bytes + offset, 4);
@@ -22,14 +23,14 @@ int ZipExtraFieldRead::ToInt32(unsigned char* bytes, int offset)
 }
 
 
-unsigned long long ZipExtraFieldRead::ToUInt64(unsigned char* bytes, int offset)
+unsigned long long ZipExtraFieldRead::ToUInt64(char* bytes, int offset)
 {
 	unsigned long long uRes;
 	memcpy(&uRes, bytes + offset, 8);
 	return uRes;
 }
 
-long long ZipExtraFieldRead::ToInt64(unsigned char* bytes, int offset)
+long long ZipExtraFieldRead::ToInt64(char* bytes, int offset)
 {
 	long long res;
 	memcpy(&res, bytes + offset, 8);
@@ -560,13 +561,15 @@ ZipReturn ZipExtraFieldRead::ReadExtraField(ZipHeader* zipHeader, bool centralDi
 				pos += 4;
 
 				CRC crcTest = CRC();
-				crcTest.SlurpBlock(zipHeader->bFileName, 0, zipHeader->fileNameLength);
+				crcTest.SlurpBlock(zipHeader->bFileNameHeader, 0, zipHeader->fileNameLength);
 				unsigned int fCRC = crcTest.Crc32ResultU();
 			
 				if (nameCRC32 == fCRC)
 				{
 					int charLen = blockLength - 5;
-					//zipHeader->Filename = Encoding.UTF8.GetString(zipHeader->bExtraField, pos, charLen);
+					zipHeader->bFileName = new char[charLen+1];
+					memcpy(zipHeader->bFileName, zipHeader->bExtraField + pos, charLen);
+					zipHeader->bFileName[charLen] = 0;
 				}
 
 				break;

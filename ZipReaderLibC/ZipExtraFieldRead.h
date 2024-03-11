@@ -5,11 +5,11 @@ class ZipExtraFieldRead
 {
 
 private:
-	static unsigned short ToUInt16(unsigned char* bytes, int offset);
-	static unsigned int ToUInt32(unsigned char* bytes, int offset);
-	static int ToInt32(unsigned char* bytes, int offset);
-	static unsigned long long ToUInt64(unsigned char* bytes, int offset);
-	static long long ToInt64(unsigned char* bytes, int offset);
+	static unsigned short ToUInt16(char* bytes, int offset);
+	static unsigned int ToUInt32(char* bytes, int offset);
+	static int ToInt32(char* bytes, int offset);
+	static unsigned long long ToUInt64(char* bytes, int offset);
+	static long long ToInt64(char* bytes, int offset);
 
 
 	static long long UtcTicksFromNtfsDateTime(long long ntfsTicks);

@@ -25,15 +25,16 @@ public:
 	long long AccessedTime = LONG_MIN;
 
 	// only in central directory
-	unsigned long RelativeOffsetOfLocalHeader;
+	unsigned long long RelativeOffsetOfLocalHeader;
 
 	unsigned short fileNameLength;
 	unsigned short extraFieldLength;
 	unsigned short fileCommentLength;
 
-	unsigned char* bFileName;
-	unsigned char* bExtraField;
-	unsigned char* bFileComment;
+	char* bFileNameHeader;
+	char* bFileName;
+	char* bExtraField;
+	char* bFileComment;
 
 	unsigned long long DataLocation;
 

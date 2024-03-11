@@ -3,6 +3,7 @@
 #include "ZipExtraFieldRead.h"
 #include <iostream>
 #include <fstream>
+#include "CodePage437.h"
 using namespace std;
 
 
@@ -257,7 +258,7 @@ ZipReturn Zip::Zip64EndOfCentralDirectoryLocatorRead()
 	return ZipGood;
 }
 
-ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long offset, ZipHeader* centralFile)
+ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long long offset, ZipHeader* centralFile)
 {
 	unsigned int thisSignature;
 	_zipFs.read((char*)&thisSignature, 4);
@@ -298,11 +299,24 @@ ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long offset, ZipHeader* cen
 
 	_zipFs.read((char*)&centralFile->RelativeOffsetOfLocalHeader, 4); // Relative Offset Of Local Header
 
-	centralFile->bFileName = new unsigned char[centralFile->fileNameLength+1];
-	_zipFs.read((char*)centralFile->bFileName, centralFile->fileNameLength); // File Name
-	centralFile->bFileName[centralFile->fileNameLength] = 0;
+	centralFile->bFileNameHeader=new char[centralFile->fileNameLength];
+	_zipFs.read((char*)centralFile->bFileNameHeader, centralFile->fileNameLength); // File Name
 
-	centralFile->bExtraField = new unsigned char[centralFile->extraFieldLength];
+	//if bit 11 of the general purpose bit flag is set, the filename is encoded using UTF-8
+	//if bit 11 of the general purpose bit flag is not set, the filename is encoded using Encoding.GetEncoding(437);
+	if ((centralFile->GeneralPurposeBitFlag & (1 << 11)))
+	{
+		centralFile->bFileName = new char[centralFile->fileNameLength + 1];
+		memcpy(centralFile->bFileName,centralFile->bFileNameHeader,centralFile->fileNameLength);
+		centralFile->bFileName[centralFile->fileNameLength] = 0;
+	}
+	else
+	{
+		CodePage437 cp437=CodePage437();
+		centralFile->bFileName = cp437.Enc(centralFile->bFileNameHeader, centralFile->fileNameLength);
+	}
+
+	centralFile->bExtraField = new char[centralFile->extraFieldLength];
 	_zipFs.read((char*)centralFile->bExtraField, centralFile->extraFieldLength); // Extra Field
 
 	if (centralFile->extraFieldLength > 0)
@@ -310,13 +324,13 @@ ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long offset, ZipHeader* cen
 
 	centralFile->RelativeOffsetOfLocalHeader += offset;
 
-	centralFile->bFileComment = new unsigned char[centralFile->fileCommentLength];
+	centralFile->bFileComment = new char[centralFile->fileCommentLength];
 	_zipFs.read((char*)centralFile->bFileComment, centralFile->fileCommentLength); // File Comment
 
 	return ZipGood;
 }
 
-ZipReturn Zip::LocalFileHeaderReader(unsigned long relativeOffsetOfLocalHeader, unsigned long compressedSize, ZipHeader* localFile)
+ZipReturn Zip::LocalFileHeaderReader(unsigned long long relativeOffsetOfLocalHeader, unsigned long long compressedSize, ZipHeader* localFile)
 {
 	localFile->RelativeOffsetOfLocalHeader = relativeOffsetOfLocalHeader;
 	_zipFs.seekg((long)relativeOffsetOfLocalHeader, ios::beg);
@@ -351,11 +365,26 @@ ZipReturn Zip::LocalFileHeaderReader(unsigned long relativeOffsetOfLocalHeader, 
 	_zipFs.read((char*)&localFile->extraFieldLength, 2); // Extra Field Length
 	localFile->fileCommentLength = 0;
 
-	localFile->bFileName = new unsigned char[localFile->fileNameLength+1];
-	_zipFs.read((char*)localFile->bFileName, localFile->fileNameLength); // File Name
-	localFile->bFileName[localFile->fileNameLength] = 0;
+	localFile->bFileNameHeader = new char[localFile->fileNameLength];
+	_zipFs.read((char*)localFile->bFileNameHeader, localFile->fileNameLength); // File Name
 
-	localFile->bExtraField = new unsigned char[localFile->extraFieldLength];
+	//if bit 11 of the general purpose bit flag is set, the filename is encoded using UTF-8
+	//if bit 11 of the general purpose bit flag is not set, the filename is encoded using Encoding.GetEncoding(437);
+	if ((localFile->GeneralPurposeBitFlag & (1 << 11)))
+	{
+		localFile->bFileName = new char[localFile->fileNameLength + 1];
+		memcpy(localFile->bFileName, localFile->bFileNameHeader, localFile->fileNameLength);
+		localFile->bFileName[localFile->fileNameLength] = 0;
+	}
+	else
+	{
+		CodePage437 cp437 = CodePage437();
+		localFile->bFileName = cp437.Enc(localFile->bFileNameHeader, localFile->fileNameLength);
+	}
+
+
+
+	localFile->bExtraField = new char[localFile->extraFieldLength];
 	_zipFs.read((char*)localFile->bExtraField, localFile->extraFieldLength); // Extra Field
 
 	if (localFile->extraFieldLength > 0)

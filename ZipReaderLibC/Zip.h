@@ -66,8 +66,8 @@ private:
 	ZipReturn Zip64EndOfCentralDirRead();
 	ZipReturn Zip64EndOfCentralDirectoryLocatorRead();
 
-	ZipReturn CentralDirectoryHeaderReader(unsigned long offset, ZipHeader* centralFile);
-	ZipReturn LocalFileHeaderReader(unsigned long relativeOffsetOfLocalHeader, unsigned long compressedSize, ZipHeader* localFile);
+	ZipReturn CentralDirectoryHeaderReader(unsigned long long offset, ZipHeader* centralFile);
+	ZipReturn LocalFileHeaderReader(unsigned long long relativeOffsetOfLocalHeader, unsigned long long compressedSize, ZipHeader* localFile);
 
 };
 

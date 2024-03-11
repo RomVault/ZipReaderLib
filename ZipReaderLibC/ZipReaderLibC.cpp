@@ -1,12 +1,16 @@
-#include <iostream>
+﻿#include <iostream>
 #include "Zip.h"
+#include <Windows.h>
 
 int main()
 {
-	Zip zip = Zip();
-	ZipReturn zr = zip.ZipFileOpen("\\\\10.0.4.9\\Dos-Files\\TotalDosCollection\\TDC Daily\\Games\\Files\\1988\\Bosse des Maths 3�me, La (Fr) (1988)(Coktel Vision) [Educational].zip");
+	SetConsoleOutputCP(CP_UTF8);
 
-	for (int i = 0; i < zip._localFilesCount; i++)
+	Zip zip = Zip();
+//	ZipReturn zr = zip.ZipFileOpen("T:\\Alone in the Dark.zip");
+	ZipReturn zr = zip.ZipFileOpen("T:\\Games\\Documentation\\Ripley's Croyez-le ou non ! L'Enigme de Maître Lu (Fr) (U.S. Gold Ltd.) [Manual].zip");
+
+	for (unsigned int i = 0; i < zip._localFilesCount; i++)
 	{
 		std::cout << "File: " << i << " " << zip._centralDirectoryHeaders[i].bFileName << " " << zip._centralDirectoryHeaders[i].UncompressedSize << " " << std::hex << zip._centralDirectoryHeaders[i].CRC << std::dec << " ";
 
@@ -23,6 +27,5 @@ int main()
 
 		std::cout << year << "/" << month << "/" << day << " " << hour << ":" << minute << ":" << second << std::endl;
 	}
-
 }
 
