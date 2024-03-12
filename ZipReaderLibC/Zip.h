@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ZipHeader.h"
-#include <iostream>
 #include <fstream>
 using namespace std;
 

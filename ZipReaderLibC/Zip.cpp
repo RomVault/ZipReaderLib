@@ -1,9 +1,8 @@
 #include "Zip.h"
 #include "ZipHeader.h"
 #include "ZipExtraFieldRead.h"
-#include <iostream>
-#include <fstream>
 #include "CodePage437.h"
+#include <fstream>
 using namespace std;
 
 
@@ -15,8 +14,6 @@ ZipReturn Zip::ZipFileOpen(const char* zipFilePath)
 	_zipFs.close();
 	return ret;
 }
-
-
 
 
 ZipReturn Zip::ZipFileReadHeaders()
