@@ -21,7 +21,7 @@ namespace ZipReaderLib
 
 
         private byte[] _fileComment;
-        public string FileComment => CompressUtils.GetString(_fileComment);
+        public string FileComment => CodePage437.GetString(_fileComment);
 
 
 
@@ -35,11 +35,6 @@ namespace ZipReaderLib
         internal ulong offset = 0;
         internal bool ExtraDataFoundOnEndOfFile = false;
 
-
-        public Zip()
-        {
-            CompressUtils.EncodeSetup();
-        }
 
         #region OpenClose
 
@@ -390,7 +385,7 @@ namespace ZipReaderLib
 
                 centralFile.bFileName = br.ReadBytes(fileNameLength);
                 centralFile.Filename = (centralFile.GeneralPurposeBitFlag & (1 << 11)) == 0
-                    ? CompressUtils.GetString(centralFile.bFileName)
+                    ? CodePage437.GetString(centralFile.bFileName)
                     : Encoding.UTF8.GetString(centralFile.bFileName, 0, fileNameLength);
 
                 centralFile.IsZip64 = false;
@@ -453,7 +448,7 @@ namespace ZipReaderLib
 
                     localFile.bFileName = br.ReadBytes(fileNameLength);
                     localFile.Filename = (localFile.GeneralPurposeBitFlag & (1 << 11)) == 0
-                        ? CompressUtils.GetString(localFile.bFileName)
+                        ? CodePage437.GetString(localFile.bFileName)
                         : Encoding.UTF8.GetString(localFile.bFileName, 0, fileNameLength);
 
                     localFile.IsZip64 = false;

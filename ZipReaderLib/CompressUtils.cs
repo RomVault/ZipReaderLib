@@ -5,22 +5,6 @@ namespace ZipReaderLib
     public static class CompressUtils
     {
 
-        // according to the zip documents, zip filenames are stored as MS-DOS Code Page 437.
-        // (Unless the unicode flag is set, in which case they are stored as UTF-8.
-        private static Encoding enc = null;
-
-        public static void EncodeSetup()
-        {
-            if (enc != null)
-                return;
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            enc = Encoding.GetEncoding(437);
-        }
-
-        public static string GetString(byte[] byteArr)
-        {
-            return byteArr == null ? null : enc.GetString(byteArr);
-        }
 
         internal static bool ByteArrCompare(byte[] b0, byte[] b1)
         {

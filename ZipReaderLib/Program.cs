@@ -1,4 +1,4 @@
-﻿using System.Reflection.Emit;
+﻿using System.Text;
 
 namespace ZipReaderLib
 {
@@ -6,16 +6,42 @@ namespace ZipReaderLib
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
+            if (Directory.Exists(args[0]))
+                OpenDir(args[0]);
+            else
+                OpenZip(args[0]);
+        }
+
+
+        static void OpenDir(string dir)
+        {
+            DirectoryInfo di = new DirectoryInfo(dir);
+            FileInfo[] fi = di.GetFiles("*.zip");
+            foreach (FileInfo f in fi)
+            {
+                OpenZip(f.FullName);
+            }
+            DirectoryInfo[] arrdi = di.GetDirectories();
+            foreach (DirectoryInfo d in arrdi)
+            {
+                OpenDir(d.FullName);
+            }
+        }
+
+        static void OpenZip(string filename)
+        {
+
             Zip zip = new Zip();
-            zip.ZipFileOpen(args[0]);
-            
+            zip.ZipFileOpen(filename);
+            Console.WriteLine($"File: {filename}");
             Console.WriteLine("------------+-------------+----------+------+-----------+---------------------+---------------------+-----------------------");
             Console.WriteLine("Comp-Size     UnComp-Size   CRC        VNTE   Comp        Header Date/Time      Extended Date/Time    Name");
             Console.WriteLine("------------+-------------+----------+------+-----------+---------------------+---------------------+-----------------------");
 
-            for (int i=0;i< zip.LocalFilesCount; i++)
+            for (int i = 0; i < zip.LocalFilesCount; i++)
             {
-                ZipHeader lf=zip.GetLocalFile(i);
+                ZipHeader lf = zip.GetLocalFile(i);
                 string HeaderModTime = zipDateTimeToString(lf.HeaderLastModified);
                 HeaderModTime = !string.IsNullOrWhiteSpace(HeaderModTime) ? HeaderModTime : "                   ";
                 string ExtendedDataModTime = lf.ModifiedTime != null ? zipDateTimeToString((long)lf.ModifiedTime) : "                   ";
