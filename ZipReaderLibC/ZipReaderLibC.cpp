@@ -8,7 +8,7 @@ int main()
 
 	Zip zip = Zip();
 //	ZipReturn zr = zip.ZipFileOpen("T:\\Alone in the Dark.zip");
-	ZipReturn zr = zip.ZipFileOpen("T:\\Games\\Documentation\\Ripley's Croyez-le ou non ! L'Enigme de Maître Lu (Fr) (U.S. Gold Ltd.) [Manual].zip");
+	ZipReturn zr = zip.ZipFileOpen("T:\\TotalDosCollection\\TDC Daily\\Games\\Files\\1990\\Lightspeed v461.01 [a1] (1990)(MicroProse Software, Inc.) [Simulation].zip");
 
 	for (unsigned int i = 0; i < zip._localFilesCount; i++)
 	{
