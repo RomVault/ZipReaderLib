@@ -6,7 +6,7 @@
 using namespace std;
 
 
-ZipReturn Zip::ZipFileOpen(const char* zipFilePath)
+ZipReturn Zip::ZipFileOpen(const wchar_t* zipFilePath)
 {
 	_zipFs.open(zipFilePath, ios::binary | ios::in);
 

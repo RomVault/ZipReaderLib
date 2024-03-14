@@ -56,7 +56,7 @@ public:
 
 
 public:
-	ZipReturn ZipFileOpen(const char* zipFilePath);
+	ZipReturn ZipFileOpen(const wchar_t* zipFilePath);
 
 private:
 	ZipReturn ZipFileReadHeaders();

@@ -7,8 +7,10 @@ int main()
 	SetConsoleOutputCP(CP_UTF8);
 
 	Zip zip = Zip();
-//	ZipReturn zr = zip.ZipFileOpen("T:\\Alone in the Dark.zip");
-	ZipReturn zr = zip.ZipFileOpen("T:\\TotalDosCollection\\TDC Daily\\Games\\Files\\1990\\Lightspeed v461.01 [a1] (1990)(MicroProse Software, Inc.) [Simulation].zip");
+
+	const wchar_t* filename = L"T:\\TotalDosCollection\\TDC Daily\\Games\\Files\\1990\\七笑拳 (Zh) [b1] (1990)(DOMO Production, Softstar Information) [Action].zip";
+
+	ZipReturn zr = zip.ZipFileOpen(filename);
 
 	for (unsigned int i = 0; i < zip._localFilesCount; i++)
 	{
