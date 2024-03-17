@@ -8,7 +8,10 @@ int main()
 
 	Zip zip = Zip();
 
-	const wchar_t* filename = L"T:\\TotalDosCollection\\TDC Daily\\Games\\Files\\1990\\七笑拳 (Zh) [b1] (1990)(DOMO Production, Softstar Information) [Action].zip";
+	//   T:\TotalDosCollection\TDC Daily\Games\Images\CD\1996\Pandora Akte, Die v1.00 (De) (1996)(Access Software, Inc.) [bin-cue].zip
+	//    T:\TotalDosCollection\TDC Daily\Games\Images\CD\1996\Pandora Directive, The v1.00 (1996)(Access Software, Inc.) [bin-cue].zip
+
+	const wchar_t* filename = L"T:\\TotalDosCollection\\TDC Daily\\Games\\Images\\CD\\1996\\Pandora Directive, The v1.00 (1996)(Access Software, Inc.) [bin-cue].zip";
 
 	ZipReturn zr = zip.ZipFileOpen(filename);
 

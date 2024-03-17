@@ -37,18 +37,18 @@ class Zip
 public:
 	unsigned int _localFilesCount;
 
-	unsigned int _centralDirSize;
-	unsigned int _centralDirStart;
-	unsigned long _endOfCentralDir64;
+	unsigned long long int _centralDirSize;
+	unsigned long long int _centralDirStart;
+	unsigned long long int _endOfCentralDir64;
 
 	unsigned char* _fileComment;
 
-	long fileSize;
+	long long int fileSize;
 	bool ExtraDataFoundOnEndOfFile = false;
 
 	bool _zip64;
 
-	unsigned long offset = 0;
+	unsigned long long int offset = 0;
 
 	ZipHeader* _centralDirectoryHeaders;
 	ZipHeader* _localFileHeaders;

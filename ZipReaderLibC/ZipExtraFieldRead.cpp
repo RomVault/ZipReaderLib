@@ -23,9 +23,9 @@ int ZipExtraFieldRead::ToInt32(char* bytes, int offset)
 }
 
 
-unsigned long long ZipExtraFieldRead::ToUInt64(char* bytes, int offset)
+unsigned long long int ZipExtraFieldRead::ToUInt64(char* bytes, int offset)
 {
-	unsigned long long uRes;
+	unsigned long long int uRes;
 	memcpy(&uRes, bytes + offset, 8);
 	return uRes;
 }
@@ -39,20 +39,20 @@ long long ZipExtraFieldRead::ToInt64(char* bytes, int offset)
 
 
 
-const unsigned long long FileTimeToUtcTime = 504911232000000000;
-const unsigned long long EpochTimeToUtcTime = 621355968000000000;
+const unsigned long long int FileTimeToUtcTime = 504911232000000000;
+const unsigned long long int EpochTimeToUtcTime = 621355968000000000;
 
-const unsigned long long TicksPerMillisecond = 10000;
-const unsigned long long TicksPerSecond = TicksPerMillisecond * 1000;
+const unsigned long long int TicksPerMillisecond = 10000;
+const unsigned long long int TicksPerSecond = TicksPerMillisecond * 1000;
 
 
 
-long long ZipExtraFieldRead::UtcTicksFromNtfsDateTime(long long ntfsTicks)
+long long int ZipExtraFieldRead::UtcTicksFromNtfsDateTime(long long int ntfsTicks)
 {
 	return ntfsTicks + FileTimeToUtcTime;
 }
 
-long long ZipExtraFieldRead::UtcTicksFromUnixDateTime(int linuxSeconds)
+long long int ZipExtraFieldRead::UtcTicksFromUnixDateTime(int linuxSeconds)
 {
 	return linuxSeconds * TicksPerSecond + EpochTimeToUtcTime;
 }

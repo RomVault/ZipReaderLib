@@ -25,7 +25,7 @@ ZipReturn Zip::ZipFileReadHeaders()
 		return zRet;
 	}
 
-	long endOfCentralDir = (long)_zipFs.tellg();
+	long long int endOfCentralDir = (long long int)_zipFs.tellg();
 	zRet = EndOfCentralDirRead();
 	if (zRet != ZipGood)
 	{
@@ -40,7 +40,7 @@ ZipReturn Zip::ZipFileReadHeaders()
 	zRet = Zip64EndOfCentralDirectoryLocatorRead();
 	if (zRet == ZipGood)
 	{
-		_zipFs.seekg((long)_endOfCentralDir64, ios::beg);
+		_zipFs.seekg(_endOfCentralDir64, ios::beg);
 		zRet = Zip64EndOfCentralDirRead();
 		if (zRet == ZipGood)
 		{
@@ -85,19 +85,19 @@ ZipReturn Zip::ZipFileReadHeaders()
 ZipReturn Zip::FindEndOfCentralDirSignature()
 {
 	_zipFs.seekg(0, ios::end);
-	fileSize = (long)_zipFs.tellg();
-	long maxBackSearch = 0xffff;
+	fileSize = (long long int)_zipFs.tellg();
+	long long int maxBackSearch = 0xffff;
 
 	if (fileSize < maxBackSearch)
 	{
 		maxBackSearch = fileSize;
 	}
 
-	const long buffSize = 0x400;
+	const long int buffSize = 0x400;
 
 	unsigned char buffer[buffSize + 4];
 
-	long backPosition = 4;
+	long long int backPosition = 4;
 	while (backPosition < maxBackSearch)
 	{
 		backPosition += buffSize;
@@ -106,13 +106,13 @@ ZipReturn Zip::FindEndOfCentralDirSignature()
 			backPosition = maxBackSearch;
 		}
 
-		long readSize = backPosition > buffSize + 4 ? buffSize + 4 : backPosition;
+		long long int readSize = backPosition > buffSize + 4 ? buffSize + 4 : backPosition;
 
 		_zipFs.seekg(fileSize - backPosition, ios::beg);
 		_zipFs.read((char*)buffer, readSize);
 
 
-		for (long i = readSize - 4; i >= 0; i--)
+		for (long long int i = readSize - 4; i >= 0; i--)
 		{
 			if (buffer[i] != 0x50 || buffer[i + 1] != 0x4b || buffer[i + 2] != 0x05 || buffer[i + 3] != 0x06)
 			{
@@ -182,7 +182,7 @@ ZipReturn Zip::Zip64EndOfCentralDirRead()
 		return ZipEndOfCentralDirectoryError;
 	}
 
-	unsigned long tULong;
+	unsigned long long int tULong;
 	_zipFs.read((char*)&tULong, 8); // Size of zip64 end of central directory record
 	if (tULong != 44)
 	{
@@ -255,7 +255,7 @@ ZipReturn Zip::Zip64EndOfCentralDirectoryLocatorRead()
 	return ZipGood;
 }
 
-ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long long offset, ZipHeader* centralFile)
+ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long long int offset, ZipHeader* centralFile)
 {
 	unsigned int thisSignature;
 	_zipFs.read((char*)&thisSignature, 4);
@@ -294,7 +294,9 @@ ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long long offset, ZipHeader
 	_zipFs.read((char*)&tUShort, 2); // InternalFileAttributes
 	_zipFs.read((char*)&tUInt, 4); // ExternalFileAttributes
 
-	_zipFs.read((char*)&centralFile->RelativeOffsetOfLocalHeader, 4); // Relative Offset Of Local Header
+	unsigned int RelOffset;
+	_zipFs.read((char*)&RelOffset, 4); // Relative Offset Of Local Header
+	centralFile->RelativeOffsetOfLocalHeader = RelOffset;
 
 	centralFile->bFileNameHeader=new char[centralFile->fileNameLength];
 	_zipFs.read((char*)centralFile->bFileNameHeader, centralFile->fileNameLength); // File Name
@@ -327,10 +329,10 @@ ZipReturn Zip::CentralDirectoryHeaderReader(unsigned long long offset, ZipHeader
 	return ZipGood;
 }
 
-ZipReturn Zip::LocalFileHeaderReader(unsigned long long relativeOffsetOfLocalHeader, unsigned long long compressedSize, ZipHeader* localFile)
+ZipReturn Zip::LocalFileHeaderReader(unsigned long long int relativeOffsetOfLocalHeader, unsigned long long int compressedSize, ZipHeader* localFile)
 {
 	localFile->RelativeOffsetOfLocalHeader = relativeOffsetOfLocalHeader;
-	_zipFs.seekg((long)relativeOffsetOfLocalHeader, ios::beg);
+	_zipFs.seekg(relativeOffsetOfLocalHeader, ios::beg);
 	unsigned int thisSignature;
 	_zipFs.read((char*)&thisSignature, 4);
 	if (thisSignature != LocalFileHeaderSignature)

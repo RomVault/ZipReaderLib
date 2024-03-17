@@ -9,23 +9,23 @@ public:
 	ZipHeader() {};
 
 	//string Filename;
-	unsigned long long UncompressedSize;
+	unsigned long long int UncompressedSize;
 	//unsigned char[] CRC;
-	unsigned long long CompressedSize;
+	unsigned long long int CompressedSize;
 	unsigned short CompressionMethod;
 
 	unsigned int CRC;
 
 	//DOS Datetime from main ZIP headers.
-	long long HeaderLastModified;
+	long long int HeaderLastModified;
 
 	//NTFS Datetime from extended Data.
-	long long ModifiedTime = LONG_MIN;
-	long long CreatedTime = LONG_MIN;
-	long long AccessedTime = LONG_MIN;
+	long long int ModifiedTime = LONG_MIN;
+	long long int CreatedTime = LONG_MIN;
+	long long int AccessedTime = LONG_MIN;
 
 	// only in central directory
-	unsigned long long RelativeOffsetOfLocalHeader;
+	unsigned long long int RelativeOffsetOfLocalHeader;
 
 	unsigned short fileNameLength;
 	unsigned short extraFieldLength;
@@ -36,7 +36,7 @@ public:
 	char* bExtraField;
 	char* bFileComment;
 
-	unsigned long long DataLocation;
+	unsigned long long int DataLocation;
 
 	bool IsZip64;
 	bool ExtraDataFound;
